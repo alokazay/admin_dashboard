@@ -1,0 +1,24 @@
+#errorMessage,
+#successMessage,
+#newTaskModalErrorMessage,
+#newUserModalErrorMessage,
+#modalSuccessMessage {
+    display: none;
+}
+
+#newTaskModalErrorMessage,
+#newUserModalErrorMessage,
+#modalSuccessMessage {
+    position: absolute;
+    width: 90%;
+    opacity: 0.8;
+}
+
+#addNewUserModal .modal-footer,
+#addTaskModal .modal-footer {
+    padding-top: 70px;
+}
+
+.actionLabel {
+    cursor: pointer;
+}
