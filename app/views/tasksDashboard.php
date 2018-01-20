@@ -84,14 +84,14 @@
                                                 <th style="width: 30%"> File</th>
                                                 <th style="width: 20%">Created</th>
                                             </tr>
-                                            <?php foreach ($tasksData as $task): ?>
+                                            @foreach($tasksData as $task)
                                             <tr>
-                                                <td><?=$task->id;?></td>
-                                                <td><?=$task->title;?></td>
-                                                <td><a href="<?=URL::asset('/uploads/tasks/'.$task->file_name.'');?>" title="Download task file..." download><?=$task->file_name;?></a></td>
-                                                <td><?=$task->created_at;?></td>
+                                                <td>{{$task->id}}</td>
+                                                <td>{{$task->title}}</td>
+                                                <td><a title="Download task file..."  href="{{URL::to('/')}}/uploads/tasks/{{$task->file_name}}">{{URL::to('/')}}/uploads/tasks/{{$task->file_name}}</a></td>
+                                                <td>{{\Carbon\Carbon::parse($task->created_at)->format('d.m.Y H:i')}}</td>
                                             </tr>
-                                            <?php endforeach; ?>
+                                            @endforeach
                                         </tbody>
                                     </table>
                                 </div>
