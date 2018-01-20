@@ -5,13 +5,14 @@ class DashboardController extends BaseController {
     // Dashboard index action
     public function indexAction()
     {
-        $user = User::find(Auth::user()->id);
+        // Такой код создаст дополнительный лишний запрос в бд.
+     //   $user = User::find(Auth::user()->id);
 
-        if ($user->role == 'admin') {
+        if (Auth::user()->role == 'admin') {
             return View::make('adminDashboard', [
                 'userData' => $user
             ]);
-        } else if ($user->role == 'manager') {
+        } else if (Auth::user()->role  == 'manager') {
             return View::make('managerDashboard', [
                 'userData' => $user
             ]);
@@ -25,14 +26,24 @@ class DashboardController extends BaseController {
     public function usersAction()
     {
         $user = User::find(Auth::user()->id);
+        
+      
+       
         if ($user->role == 'admin') {
             $users = User::all();
+     
+            
+        // Если будет много задач, данный код будет плохо работать, нужно использовать отношения
+        // belongs to в модели User а также with 
+        // Пример Users::where('id','<>', 0)->with('tasks')->get(); даст 2 запроса в БД
+        // Ваш код даст 1 * N юзеров...   
+            
             foreach ($users as $item) {
                 $item->tasks = Task::where('user_id', $item->id)->count();
 
             }
             return View::make('usersDashboard', [
-                'userData' => $user,
+                'userData' => $user, // Тоже лишнее как и писал выше, есть для этого Auth::user он доступен в блайде
                 'usersData' => $users
             ]);
 
@@ -57,6 +68,11 @@ class DashboardController extends BaseController {
     }
 
     // Ajax request action    
+    // Когда роутов будет много все это дело обрабывать одним котроллером не правльно.
+    // для этого и сущевует get и post
+    // Например роуты ниже нужно писать вот так postAdduser postDeleteuser ... 
+    // тогда конструкци свитч вообще не нужна
+    
     public function ajaxAction()
     {
         $action = Input::get('action');
@@ -76,6 +92,7 @@ class DashboardController extends BaseController {
                     ];
                 }
         
+                // Здесь не есть оишбка, но Laravel есть хороший валидатор  https://laravel.com/docs/4.2/validation
                 if ($login == '' || $password == '' || $role == '') {
                     return [
                         'code' => 0,
@@ -96,6 +113,11 @@ class DashboardController extends BaseController {
                 $user->password = Hash::make($password);
                 $user->save();
         
+                // Для ajax опять же правльнее возвращать вот так
+                // return Response::json(array('code' => "1", 'message'=> 'Success save data'), 200);
+                // в наших проектах мы используем всегда стандарт 
+                //  return Response::json(array('success' => "true"), 200); Для успешного
+                //  return Response::json(array('success' => "false" ,'error'=>'Ошибка'), 200); Для ошибки
                 return [
                     'code' => 1,
                     'message' => 'Success save data'
@@ -105,9 +127,13 @@ class DashboardController extends BaseController {
             
             // Delete user data
             case 'deleteUserData':
+                
+                
                 $userId = Input::get('id');
                 $tasks = Task::where('user_id', $userId)->get();
                 foreach ($tasks as $task) {
+                    // Цикл здесь лишний, удалять всех юзеров можно 1 строкой просто выборкой,
+                    // Файлы удалять с севрера, можно было наверно лучше создав папку с ид юзера и просто удалять ее
                     File::delete('uploads/tasks/'.$task->file_name);
                     Task::where('id', $task->id)->delete();
                 }
@@ -131,6 +157,9 @@ class DashboardController extends BaseController {
     // Add task action
     public function addTaskAction()
     {
+        
+        // В некторых случаях важна првоерка на xss и других атак 
+        // Но загрузку файло всегда желательно проверять хотябы валидатором.
         $file = Input::file('taskFile');
         $userId = Input::get('newTaskUserId');
         $title = Input::get('newTaskTitle');
@@ -140,6 +169,7 @@ class DashboardController extends BaseController {
         $task->user_id = $userId;
         $task->save();
         
+        // Здесь уже обсуждали насчет расширения ранее
         $task->file_name = 'task_'.$task->id.'.txt';
         $task->save();
 
